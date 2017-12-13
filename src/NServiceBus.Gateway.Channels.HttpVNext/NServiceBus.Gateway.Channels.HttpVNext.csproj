@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
+    <OutputPath>..\..\binaries\</OutputPath>
+    <Description>HTTP-vNext Channel for NServiceBus.Gateway</Description>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
+    <Reference Include="System.Web" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NServiceBus.Gateway" Version="[3.0.0-beta0003, 4.0.0]" />
+  </ItemGroup>
+
+
+</Project>
