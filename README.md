@@ -6,4 +6,4 @@ An HTTP channel implementation for NServiceBus.Gateway that doesn't use HTTP Hea
 
 SimpleJson is licensed under the MIT license as described [here](https://github.com/facebook-csharp-sdk/simple-json/blob/master/LICENSE.txt).
 
-SimpleJson sources are compiled into the NServiceBus distribution as allowed under the license terms found [here](https://github.com/facebook-csharp-sdk/simple-json/blob/master/LICENSE.txt).
+SimpleJson sources are compiled into NServiceBus.Gateway.Channels.HttpVNext as allowed under the license terms found [here](https://github.com/facebook-csharp-sdk/simple-json/blob/master/LICENSE.txt).
