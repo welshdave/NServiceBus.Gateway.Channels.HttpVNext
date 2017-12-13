@@ -4,6 +4,8 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Net;
+    using System.Security.Cryptography;
+    using System.Text;
     using System.Threading.Tasks;
     using System.Web;
     using Logging;
@@ -18,47 +20,49 @@
             var request = WebRequest.Create(remoteUrl);
 #pragma warning restore DE0003 // API is deprecated
             request.Method = "POST";
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.Headers = Encode(headers);
+            request.ContentType = "application/json";
             request.UseDefaultCredentials = true;
-            request.ContentLength = data.Length;
 
-            using (var stream = await request.GetRequestStreamAsync().ConfigureAwait(false))
+            var payload = new Payload
             {
-                await data.CopyToAsync(stream).ConfigureAwait(false);
+                Headers = headers,
+                Message = data.ToByteArray()
+            };
+
+            var content = Encoding.UTF8.GetBytes(SimpleJson.SerializeObject(payload));
+            request.ContentLength = content.Length;
+            byte[] hash;
+            using (var md5 = MD5.Create())
+            {
+                hash = md5.ComputeHash(content);
+            }
+            
+            using (var stream = request.GetRequestStream())
+            {
+                stream.Write(content, 0, content.Length);
             }
 
             HttpStatusCode statusCode;
-
-            //todo make the receiver send the md5 back so that we can double check that the transmission went ok
+            var md5Ok = false;
+            
             using (var response = (HttpWebResponse)await request.GetResponseAsync().ConfigureAwait(false))
             {
                 statusCode = response.StatusCode;
+                var responseContent = response.GetResponseStream().ToByteArray();
+                var contentString = Encoding.UTF8.GetString(responseContent);
+                md5Ok = (hash.ToHex() == contentString);
             }
 
             Logger.Debug("Got HTTP response with status code " + statusCode);
 
-            if (statusCode != HttpStatusCode.OK)
+            if (statusCode != HttpStatusCode.OK || !md5Ok)
             {
                 Logger.Warn("Message not transferred successfully. Trying again...");
                 throw new Exception("Retrying");
             }
         }
 
-        static WebHeaderCollection Encode(IDictionary<string, string> headers)
-        {
-            var webHeaders = new WebHeaderCollection();
-
-            foreach (var pair in headers)
-            {
-                webHeaders.Add(HttpUtility.UrlEncode(pair.Key), HttpUtility.UrlEncode(pair.Value));
-            }
-
-            return webHeaders;
-        }
-
-
-        static ILog Logger = LogManager.GetLogger<HttpVNextChannelSender>();
+        static readonly ILog Logger = LogManager.GetLogger<HttpVNextChannelSender>();
     }
 }
 

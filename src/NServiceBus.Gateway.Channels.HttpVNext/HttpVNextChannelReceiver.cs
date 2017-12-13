@@ -6,6 +6,7 @@
     using System.IO;
     using System.Linq;
     using System.Net;
+    using System.Security.Cryptography;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -120,16 +121,24 @@
         {
             try
             {
-                var headers = GetHeaders(context);
-                var dataStream = await GetMessageStream(context, token).ConfigureAwait(false);
+                var payloadBytes = await GetPayloadBytes(context, token);
+                var payload = GetPayload(payloadBytes);
 
+                var dataStream = new MemoryStream(payload.Message);
+                
                 await dataReceivedHandler(new DataReceivedOnChannelArgs
                 {
-                    Headers = headers,
+                    Headers = payload.Headers,
                     Data = dataStream
                 }).ConfigureAwait(false);
 
-                ReportSuccess(context);
+                byte[] hash;
+                using (var md5 = MD5.Create())
+                {
+                    hash = md5.ComputeHash(payloadBytes);
+                }
+
+                ReportSuccess(context, hash);
 
                 Logger.Debug("Http request processing complete.");
             }
@@ -147,66 +156,38 @@
                 concurrencyLimiter.Release();
             }
         }
-
-        static async Task<MemoryStream> GetMessageStream(HttpListenerContext context, CancellationToken token)
+        
+        static Payload GetPayload(byte[] bytes)
         {
-            if (context.Request.QueryString.AllKeys.Contains("Message"))
-            {
-                var message = HttpUtility.UrlDecode(context.Request.QueryString["Message"]);
+            var json = Encoding.UTF8.GetString(bytes);
+            return SimpleJson.DeserializeObject<Payload>(json);
+        }
 
-                return new MemoryStream(Encoding.UTF8.GetBytes(message));
-            }
-
+        static async Task<byte[]> GetPayloadBytes(HttpListenerContext context, CancellationToken token)
+        {
             var streamToReturn = new MemoryStream();
 
             await context.Request.InputStream.CopyToAsync(streamToReturn, MaximumBytesToRead, token).ConfigureAwait(false);
             streamToReturn.Position = 0;
 
-            return streamToReturn;
+            return streamToReturn.ToByteArray();
         }
 
-        static IDictionary<string, string> GetHeaders(HttpListenerContext context)
-        {
-            var headers = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-
-            foreach (string header in context.Request.Headers.Keys)
-            {
-                headers.Add(HttpUtility.UrlDecode(header), HttpUtility.UrlDecode(context.Request.Headers[header]));
-            }
-
-            foreach (string header in context.Request.QueryString.Keys)
-            {
-                headers[HttpUtility.UrlDecode(header)] = HttpUtility.UrlDecode(context.Request.QueryString[header]);
-            }
-
-            return headers;
-        }
-
-        static void ReportSuccess(HttpListenerContext context)
+        static void ReportSuccess(HttpListenerContext context, byte[] hash)
         {
             Logger.Debug("Sending HTTP 200 response.");
 
             context.Response.StatusCode = 200;
             context.Response.StatusDescription = "OK";
 
-            WriteData(context, "OK");
+            WriteData(context, hash.ToHex());
         }
 
-        static void WriteData(HttpListenerContext context, string status)
+        static void WriteData(HttpListenerContext context, string content)
         {
-            var newStatus = status;
-
-            var jsonCallback = context.Request.QueryString["callback"];
-            if (string.IsNullOrEmpty(jsonCallback) == false)
-            {
-                newStatus = jsonCallback + "({ status: '" + newStatus + "'})";
-                context.Response.AddHeader("Content-Type", "application/javascript; charset=utf-8");
-            }
-            else
-            {
-                context.Response.AddHeader("Content-Type", "application/json; charset=utf-8");
-            }
-            context.Response.Close(Encoding.ASCII.GetBytes(newStatus), false);
+            context.Response.AddHeader("Content-Type", "text/plain; charset=utf-8");
+            
+            context.Response.Close(Encoding.ASCII.GetBytes(content), false);
         }
 
         static void CloseResponseAndWarn(HttpListenerContext context, string warning, int statusCode)
