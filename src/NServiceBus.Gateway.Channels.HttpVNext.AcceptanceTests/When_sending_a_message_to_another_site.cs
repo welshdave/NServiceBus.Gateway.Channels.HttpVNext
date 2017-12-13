@@ -35,8 +35,8 @@
                     var gatewaySettings = c.Gateway();
                     gatewaySettings.ChannelFactories(s => new HttpVNextChannelSender(), s => new HttpVNextChannelReceiver());
 
-                    gatewaySettings.AddReceiveChannel("http://localhost:25999/Headquarters/","httpVNext");
-                    gatewaySettings.AddSite("SiteA", "http://localhost:25999/SiteA/","httpVNext");
+                    gatewaySettings.AddReceiveChannel("http://localhost:25999/Headquarters/", "httpVNext");
+                    gatewaySettings.AddSite("SiteA", "http://localhost:25999/SiteA/", "httpVNext");
                 });
             }
 
@@ -61,7 +61,7 @@
                     var gatewaySettings = c.Gateway();
                     gatewaySettings.ChannelFactories(s => new HttpVNextChannelSender(), s => new HttpVNextChannelReceiver());
 
-                    gatewaySettings.AddReceiveChannel("http://localhost:25999/SiteA/","httpVNext");
+                    gatewaySettings.AddReceiveChannel("http://localhost:25999/SiteA/", "httpVNext");
                 });
             }
 
