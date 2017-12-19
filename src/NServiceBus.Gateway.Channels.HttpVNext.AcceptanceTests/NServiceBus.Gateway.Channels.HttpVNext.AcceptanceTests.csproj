@@ -11,6 +11,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net452'">
     <Reference Include="System.Web" />
+    <PackageReference Include="Microsoft.Net.Http" Version="2.2.29" />
   </ItemGroup>
 
   <ItemGroup>
