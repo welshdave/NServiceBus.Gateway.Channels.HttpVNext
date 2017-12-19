@@ -3,6 +3,7 @@
     using System;
     using System.Net;
     using System.Net.Http;
+    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -32,7 +33,7 @@
             Task.Run(ProcessRequests, CancellationToken.None);
         }
 
-        public async Task Stop()
+        public void Stop()
         {
             cancellationTokenSource?.Cancel();
             listener?.Close();
@@ -100,11 +101,11 @@
             catch (Exception ex)
             {
                 context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                context.Response.Close(Encoding.UTF8.GetBytes(ex.Message), false);
             }
         }
 
         Uri siteToProxy;
-        SemaphoreSlim concurrencyLimiter;
         HttpListener listener;
         CancellationTokenSource cancellationTokenSource;
         CancellationToken cancellationToken;

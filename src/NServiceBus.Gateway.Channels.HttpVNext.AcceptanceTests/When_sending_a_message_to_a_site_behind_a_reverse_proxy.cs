@@ -21,7 +21,7 @@
                 .Done(c => c.GotResponseBack)
                 .Run();
 
-            await proxy.Stop();
+            proxy.Stop();
 
             Assert.IsTrue(context.GotResponseBack);
         }
