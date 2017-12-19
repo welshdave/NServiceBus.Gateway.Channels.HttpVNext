@@ -36,8 +36,6 @@
         {
             cancellationTokenSource?.Cancel();
             listener?.Close();
-
-
         }
 
         async Task ProcessRequests()
