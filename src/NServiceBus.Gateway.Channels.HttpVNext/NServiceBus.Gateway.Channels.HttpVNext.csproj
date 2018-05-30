@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="GitVersionTask" Version="4.0.0-beta0012" PrivateAssets="All" />
-    <PackageReference Include="NServiceBus.Gateway" Version="[3.0.0-beta0003, 4.0.0]" />
+    <PackageReference Include="NServiceBus.Gateway" Version="[3.0.0, 4.0.0]" />
     <PackageReference Include="SimpleJson" Version="0.38.0" PrivateAssets="All" />
   </ItemGroup>
 
